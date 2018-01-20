@@ -18,13 +18,13 @@ function parse(dns) {
      * to match up replies to outstanding queries.
      */
     HEADER.ID = parseInt(pkg.match(/^.{16}/), 2);
-    pkg = pkg.replace(pkg.match(/^.{16}/), '');
+    pkg = pkg.replace(/^.{16}/, '');
     /**
      * A one bit field that specifies whether this message is a
      * query (0), or a response (1).
      */
     HEADER.QR = parseInt(pkg.match(/^.{1}/), 2);
-    pkg = pkg.replace(pkg.match(/^.{1}/), '');
+    pkg = pkg.replace(/^.{1}/, '');
     /**
      * A four bit field that specifies kind of query in this
      * message.  This value is set by the originator of a query
@@ -39,7 +39,7 @@ function parse(dns) {
      * 3-15            reserved for future use
      */
     HEADER.OPCODE = parseInt(pkg.match(/^.{4}/), 2);
-    pkg = pkg.replace(pkg.match(/^.{4}/), '');
+    pkg = pkg.replace(/^.{4}/, '');
     /**
      * Authoritative Answer - this bit is valid in responses,
      * and specifies that the responding name server is an
@@ -51,14 +51,14 @@ function parse(dns) {
      * the first owner name in the answer section.
      */
     HEADER.AA = parseInt(pkg.match(/^.{1}/), 2);
-    pkg = pkg.replace(pkg.match(/^.{1}/), '');
+    pkg = pkg.replace(/^.{1}/, '');
     /**
      * TrunCation - specifies that this message was truncated
      * due to length greater than that permitted on the
      * transmission channel.
      */
     HEADER.TC = parseInt(pkg.match(/^.{1}/), 2);
-    pkg = pkg.replace(pkg.match(/^.{1}/), '');
+    pkg = pkg.replace(/^.{1}/, '');
     /**
      * Recursion Desired - this bit may be set in a query and
      * is copied into the response.  If RD is set, it directs
@@ -66,34 +66,34 @@ function parse(dns) {
      * Recursive query support is optional.
      */
     HEADER.RD = parseInt(pkg.match(/^.{1}/), 2);
-    pkg = pkg.replace(pkg.match(/^.{1}/), '');
+    pkg = pkg.replace(/^.{1}/, '');
     /**
      * Recursion Available - this be is set or cleared in a
      * response, and denotes whether recursive query support is
      * available in the name server.
      */
     HEADER.RA = parseInt(pkg.match(/^.{1}/), 2);
-    pkg = pkg.replace(pkg.match(/^.{1}/), '');
+    pkg = pkg.replace(/^.{1}/, '');
     /**
      * Reserved for future use.  Must be zero in all queries
      * and responses.
      */
     HEADER.Z = parseInt(pkg.match(/^.{1}/), 2);
-    pkg = pkg.replace(pkg.match(/^.{1}/), '');
+    pkg = pkg.replace(/^.{1}/, '');
     /**
      * The AD (authentic data) bit indicates in a response
      * that the data included has been verified by the server
      * providing it.
      */
     HEADER.AD = parseInt(pkg.match(/^.{1}/), 2);
-    pkg = pkg.replace(pkg.match(/^.{1}/), '');
+    pkg = pkg.replace(/^.{1}/, '');
     /**
      * The CD (checking disabled) bit indicates in a query
      * that non-verified data is acceptable to the resolver
      * sending the query.
      */
     HEADER.CD = parseInt(pkg.match(/^.{1}/), 2);
-    pkg = pkg.replace(pkg.match(/^.{1}/), '');
+    pkg = pkg.replace(/^.{1}/, '');
     /**
      * Response code - this 4 bit field is set as part of
      * responses.  The values have the following
@@ -129,32 +129,32 @@ function parse(dns) {
      * 6-15            Reserved for future use.
      */
     HEADER.RCODE = parseInt(pkg.match(/^.{4}/), 2);
-    pkg = pkg.replace(pkg.match(/^.{4}/), '');
+    pkg = pkg.replace(/^.{4}/, '');
     /**
      * An unsigned 16 bit integer specifying the number of
      * entries in the question section.
      */
     HEADER.QDCOUNT = parseInt(pkg.match(/^.{16}/), 2);
-    pkg = pkg.replace(pkg.match(/^.{16}/), '');
+    pkg = pkg.replace(/^.{16}/, '');
     /**
      * An unsigned 16 bit integer specifying the number of
      * resource records in the answer section.
      */
     HEADER.ANCOUNT = parseInt(pkg.match(/^.{16}/), 2);
-    pkg = pkg.replace(pkg.match(/^.{16}/), '');
+    pkg = pkg.replace(/^.{16}/, '');
     /**
      * An unsigned 16 bit integer specifying the number of name
      * server resource records in the authority records
      * section.
      */
     HEADER.NSCOUNT = parseInt(pkg.match(/^.{16}/), 2);
-    pkg = pkg.replace(pkg.match(/^.{16}/), '');
+    pkg = pkg.replace(/^.{16}/, '');
     /**
      * An unsigned 16 bit integer specifying the number of
      * resource records in the additional records section.
      */
     HEADER.ARCOUNT = parseInt(pkg.match(/^.{16}/), 2);
-    pkg = pkg.replace(pkg.match(/^.{16}/), '');
+    pkg = pkg.replace(/^.{16}/, '');
   }());
   (function questions() {
     for (let i = 0; i < HEADER.QDCOUNT; i++) {
@@ -170,8 +170,8 @@ function parse(dns) {
       q.QNAME = '';
       while (true) { // eslint-disable-line no-constant-condition
         let e = parseInt(pkg.match(/^.{8}/), 2);
-        pkg = pkg.replace(pkg.match(/^.{8}/), '');
         if (e === 0) {
+          pkg = pkg.replace(/^.{8}/, '');
           break;
         }
 
@@ -179,15 +179,21 @@ function parse(dns) {
          * Message compression
          */
         if (parseInt(pkg.match(/^.{2}/), 2) === 0b11) {
-          pkg = pkg.replace(pkg.match(/^.{2}/), '');
+          pkg = pkg.replace(/^.{2}/, '');
           const pnt = parseInt(pkg.match(/^.{14}/), 2);
+          pkg = pkg.replace(/^.{14}/, '');
+
           q.QNAME += compression(dns, pnt);
-          pkg = pkg.replace(pkg.match(/^.{14}/), '');
+          if (parseInt(pkg.match(/^.{8}/), 2) === 0) {
+            break;
+          }
+        } else {
+          pkg = pkg.replace(/^.{8}/, '');
         }
 
         while (e > 0) {
           q.QNAME += binToString(pkg.match(/^.{8}/));
-          pkg = pkg.replace(pkg.match(/^.{8}/), '');
+          pkg = pkg.replace(/^.{8}/, '');
           e--;
         }
         q.QNAME += '.';
@@ -199,13 +205,13 @@ function parse(dns) {
        * can match more than one type of RR.
        */
       q.QTYPE = typemap.QTYPE[parseInt(pkg.match(/^.{16}/), 2)];
-      pkg = pkg.replace(pkg.match(/^.{16}/), '');
+      pkg = pkg.replace(/^.{16}/, '');
       /**
        * A two octet code that specifies the class of the query.
        * For example, the QCLASS field is IN for the Internet.
        */
       q.QCLASS = typemap.QCLASS[parseInt(pkg.match(/^.{16}/), 2)];
-      pkg = pkg.replace(pkg.match(/^.{16}/), '');
+      pkg = pkg.replace(/^.{16}/, '');
 
       QUESTIONS.push(q);
     }

@@ -25,7 +25,9 @@
     "TLSA",
     "TSIG",
     "Trun",
+    "akadns",
     "arpa",
+    "onprembn",
     "typemap"
   ]
 }

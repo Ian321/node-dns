@@ -1,0 +1,31 @@
+{
+  "cSpell.words": [
+    "AFSDB",
+    "ANCOUNT",
+    "ARCOUNT",
+    "AXFR",
+    "CDNSKEY",
+    "DHCID",
+    "DNAME",
+    "DNSKEY",
+    "IPSECKEY",
+    "IQUERY",
+    "IXFR",
+    "NSCOUNT",
+    "NSEC",
+    "OPENPGPKEY",
+    "QCLASS",
+    "QDCOUNT",
+    "QNAME",
+    "QTYPE",
+    "RCODE",
+    "RRSIG",
+    "SSHFP",
+    "TKEY",
+    "TLSA",
+    "TSIG",
+    "Trun",
+    "arpa",
+    "typemap"
+  ]
+}

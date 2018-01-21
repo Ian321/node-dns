@@ -1,6 +1,7 @@
 const { hexToBin, binToString } = require('../lib');
 const typemap = require('./typemap');
-const compression = require('./compression');
+const compression = require('./parse/compression');
+const RR = require('./parse/RR');
 
 /**
  * Parses a DNS package
@@ -10,6 +11,7 @@ function parse(dns) {
   let pkg = hexToBin(dns.toString('hex'), 16);
   const HEADER = {};
   const QUESTIONS = [];
+  const ANSWERS = [];
   (function header() {
     /**
      * A 16 bit identifier assigned by the program that
@@ -185,6 +187,7 @@ function parse(dns) {
 
           q.QNAME += compression(dns, pnt);
           if (parseInt(pkg.match(/^.{8}/), 2) === 0) {
+            pkg = pkg.replace(/^.{8}/, '');
             break;
           }
         } else {
@@ -216,7 +219,84 @@ function parse(dns) {
       QUESTIONS.push(q);
     }
   }());
-  return { HEADER, QUESTIONS };
+  (function answers() {
+    if (!HEADER.ANCOUNT) return;
+    for (let i = 0; i < HEADER.ANCOUNT; i++) {
+      const a = {};
+      /**
+       * A domain name to which this resource record pertains.
+       */
+      a.NAME = '';
+      while (true) { // eslint-disable-line no-constant-condition
+        let e = parseInt(pkg.match(/^.{8}/), 2);
+        if (e === 0) {
+          break;
+        }
+
+        /**
+         * Message compression
+         */
+        if (parseInt(pkg.match(/^.{2}/), 2) === 0b11) {
+          pkg = pkg.replace(/^.{2}/, '');
+          const pnt = parseInt(pkg.match(/^.{14}/), 2);
+          pkg = pkg.replace(/^.{14}/, '');
+
+          a.NAME += compression(dns, pnt);
+          if (parseInt(pkg.match(/^.{8}/), 2) === 0) {
+            break;
+          }
+        } else {
+          pkg = pkg.replace(/^.{8}/, '');
+        }
+
+        while (e > 0) {
+          a.NAME += binToString(pkg.match(/^.{8}/));
+          pkg = pkg.replace(/^.{8}/, '');
+          e--;
+        }
+        a.NAME += '.';
+      }
+      /**
+       * Two octets containing one of the RR type codes.  This
+       * field specifies the meaning of the data in the RDATA
+       * field.
+       */
+      a.TYPE = typemap.QTYPE[parseInt(pkg.match(/^.{16}/), 2)];
+      pkg = pkg.replace(/^.{16}/, '');
+      /**
+       * Two octets which specify the class of the data in the
+       * RDATA field.
+       */
+      a.CLASS = typemap.QCLASS[parseInt(pkg.match(/^.{16}/), 2)];
+      pkg = pkg.replace(/^.{16}/, '');
+      /**
+       * A 32 bit unsigned integer that specifies the time
+       * interval (in seconds) that the resource record may be
+       * cached before it should be discarded.  Zero values are
+       * interpreted to mean that the RR can only be used for the
+       * transaction in progress, and should not be cached.
+       */
+      a.TTL = parseInt(pkg.match(/^.{32}/), 2);
+      pkg = pkg.replace(/^.{32}/, '');
+      /**
+       * An unsigned 16 bit integer that specifies the length in
+       * octets of the RDATA field.
+       */
+      a.RDLENGTH = parseInt(pkg.match(/^.{16}/), 2);
+      pkg = pkg.replace(/^.{16}/, '');
+      /**
+       * A variable length string of octets that describes the
+       * resource.  The format of this information varies
+       * according to the TYPE and CLASS of the resource record.
+       */
+      const RDATArx = new RegExp(`^.{${a.RDLENGTH * 8}}`);
+      const _RDATA = pkg.match(RDATArx)[0]; // eslint-disable-line prefer-destructuring
+      pkg = pkg.replace(RDATArx, '');
+      a.RDATA = RR[RR[a.TYPE] ? a.TYPE : 'undefined'](_RDATA);
+      ANSWERS.push(a);
+    }
+  }());
+  return { HEADER, QUESTIONS, ANSWERS };
 }
 
 module.exports = parse;

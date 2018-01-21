@@ -4,13 +4,16 @@ Can do list:
 
 - [X] Parse Header
 - [X] Parse Question
-- [ ] Parse Answer
+- [X] Parse Answer
+- [ ] Parse RR
 - [ ] Parse Authority
 - [ ] Parse Additional
 
 Things to test:
 
-- [ ] Message compression
+- [ ] Message decompression
+  - [ ] Question
+  - [X] Answer
 
 RFCs:
 

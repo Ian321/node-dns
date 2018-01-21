@@ -1,4 +1,4 @@
-const { hexToBin, binToString } = require('../lib');
+const { hexToBin, binToString } = require('../../lib');
 /**
  * @param {Buffer} fullRequest
  * @param {number} pnt Pointer

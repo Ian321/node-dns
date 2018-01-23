@@ -1,9 +1,14 @@
+const { binToIPv4 } = require('../../lib');
+
 module.exports = {
-  A: RDATA => RDATA,
+  A: RDATA => ({ ADDRESS: binToIPv4(RDATA) }),
   NS: RDATA => RDATA,
   CNAME: RDATA => RDATA,
   SOA: RDATA => RDATA,
+  WKS: RDATA => RDATA,
   PTR: RDATA => RDATA,
+  HINFO: RDATA => RDATA,
+  MINFO: RDATA => RDATA,
   MX: RDATA => RDATA,
   TXT: RDATA => RDATA,
   RP: RDATA => RDATA,

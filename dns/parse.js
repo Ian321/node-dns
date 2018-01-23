@@ -186,10 +186,7 @@ function parse(dns) {
           pkg = pkg.replace(/^.{14}/, '');
 
           q.QNAME += compression(dns, pnt);
-          if (parseInt(pkg.match(/^.{8}/), 2) === 0) {
-            pkg = pkg.replace(/^.{8}/, '');
-            break;
-          }
+          break;
         } else {
           pkg = pkg.replace(/^.{8}/, '');
         }
@@ -228,6 +225,10 @@ function parse(dns) {
        */
       a.NAME = '';
       while (true) { // eslint-disable-line no-constant-condition
+        if (pkg.length === 0) {
+          console.error(a);
+          throw new Error('Parsing error');
+        }
         let e = parseInt(pkg.match(/^.{8}/), 2);
         if (e === 0) {
           break;
@@ -242,9 +243,7 @@ function parse(dns) {
           pkg = pkg.replace(/^.{14}/, '');
 
           a.NAME += compression(dns, pnt);
-          if (parseInt(pkg.match(/^.{8}/), 2) === 0) {
-            break;
-          }
+          break;
         } else {
           pkg = pkg.replace(/^.{8}/, '');
         }

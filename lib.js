@@ -40,4 +40,14 @@ function binToString(bin) {
   return Buffer.from(parseInt(bin, 2).toString(16), 'hex').toString();
 }
 
-module.exports = { hexToBin, binToString };
+/**
+ * Converts 32 bits into a IPv4 address.
+ * @param {string} bin A 32 bit Internet address.
+ */
+function binToIPv4(bin) {
+  if (!/^[01]{32}$/.test(bin)) throw new Error('Not 32 bit!');
+  const out = bin.replace(/(.{8})/g, (full, $1) => `${parseInt($1, 2)}.`);
+  return out.replace(/\.$/, '');
+}
+
+module.exports = { hexToBin, binToString, binToIPv4 };

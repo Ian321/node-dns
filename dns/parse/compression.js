@@ -1,4 +1,5 @@
-const { hexToBin, binToString } = require('../../lib');
+const { hex, bin } = require('../conversion');
+
 /**
  * @param {Buffer} fullRequest
  * @param {number} pnt Pointer
@@ -6,7 +7,7 @@ const { hexToBin, binToString } = require('../../lib');
 function parseCompression(fullRequest, pnt) {
   if (!pnt) throw new Error('Missing pointer');
 
-  let tmp = hexToBin(fullRequest.toString('hex'), 16).match(new RegExp(`.{${pnt * 8}}(.*)00000000`))[1];
+  let tmp = hex.toBin(fullRequest.toString('hex'), 16).match(new RegExp(`.{${pnt * 8}}(.*)00000000`))[1];
 
   let out = '';
   while (true) { // eslint-disable-line no-constant-condition
@@ -31,7 +32,7 @@ function parseCompression(fullRequest, pnt) {
     }
 
     while (e > 0) {
-      out += binToString(tmp.match(/^.{8}/));
+      out += bin.toString(tmp.match(/^.{8}/));
       tmp = tmp.replace(/^.{8}/, '');
       e--;
     }

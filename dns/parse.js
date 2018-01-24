@@ -1,4 +1,5 @@
-const { hexToBin, binToString } = require('../lib');
+const { bin, hex } = require('./conversion');
+
 const typemap = require('./typemap');
 const compression = require('./parse/compression');
 const RR = require('./parse/RR');
@@ -8,7 +9,7 @@ const RR = require('./parse/RR');
  * @param {Buffer} dns
  */
 function parse(dns) {
-  let pkg = hexToBin(dns.toString('hex'), 16);
+  let pkg = hex.toBin(dns.toString('hex'), 16);
   const HEADER = {};
   let QUESTIONS;
   let ANSWERS;
@@ -194,7 +195,7 @@ function parse(dns) {
         }
 
         while (e > 0) {
-          q.QNAME += binToString(pkg.match(/^.{8}/));
+          q.QNAME += bin.toString(pkg.match(/^.{8}/));
           pkg = pkg.replace(/^.{8}/, '');
           e--;
         }
@@ -252,7 +253,7 @@ function parse(dns) {
         }
 
         while (e > 0) {
-          a.NAME += binToString(pkg.match(/^.{8}/));
+          a.NAME += bin.toString(pkg.match(/^.{8}/));
           pkg = pkg.replace(/^.{8}/, '');
           e--;
         }

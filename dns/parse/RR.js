@@ -1,7 +1,7 @@
-const { binToIPv4 } = require('../../lib');
+const { bin } = require('../conversion');
 
 module.exports = {
-  A: RDATA => ({ ADDRESS: binToIPv4(RDATA) }),
+  A: RDATA => ({ ADDRESS: bin.toIPv4(RDATA) }),
   NS: RDATA => RDATA,
   CNAME: RDATA => RDATA,
   SOA: RDATA => RDATA,
@@ -15,7 +15,7 @@ module.exports = {
   AFSDB: RDATA => RDATA,
   SIG: RDATA => RDATA,
   KEY: RDATA => RDATA,
-  AAAA: RDATA => RDATA,
+  AAAA: RDATA => ({ ADDRESS: bin.toIPv6(RDATA) }),
   LOC: RDATA => RDATA,
   SRV: RDATA => RDATA,
   NAPTR: RDATA => RDATA,

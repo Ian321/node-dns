@@ -10,8 +10,8 @@ const RR = require('./parse/RR');
 function parse(dns) {
   let pkg = hexToBin(dns.toString('hex'), 16);
   const HEADER = {};
-  const QUESTIONS = [];
-  const ANSWERS = [];
+  let QUESTIONS;
+  let ANSWERS;
   (function header() {
     /**
      * A 16 bit identifier assigned by the program that
@@ -159,16 +159,18 @@ function parse(dns) {
     pkg = pkg.replace(/^.{16}/, '');
   }());
   (function questions() {
+    if (!HEADER.QDCOUNT) return;
+    QUESTIONS = [];
     for (let i = 0; i < HEADER.QDCOUNT; i++) {
       const q = {};
       /**
-       * A domain name represented as a sequence of labels, where
-       * each label consists of a length octet followed by that
-       * number of octets.  The domain name terminates with the
-       * zero length octet for the null label of the root.  Note
-       * that this field may be an odd number of octets; no
-       * padding is used.
-       */
+         * A domain name represented as a sequence of labels, where
+         * each label consists of a length octet followed by that
+         * number of octets.  The domain name terminates with the
+         * zero length octet for the null label of the root.  Note
+         * that this field may be an odd number of octets; no
+         * padding is used.
+         */
       q.QNAME = '';
       while (true) { // eslint-disable-line no-constant-condition
         let e = parseInt(pkg.match(/^.{8}/), 2);
@@ -178,8 +180,8 @@ function parse(dns) {
         }
 
         /**
-         * Message compression
-         */
+           * Message compression
+           */
         if (parseInt(pkg.match(/^.{2}/), 2) === 0b11) {
           pkg = pkg.replace(/^.{2}/, '');
           const pnt = parseInt(pkg.match(/^.{14}/), 2);
@@ -199,17 +201,17 @@ function parse(dns) {
         q.QNAME += '.';
       }
       /**
-       * A two octet code which specifies the type of the query.
-       * The values for this field include all codes valid for a
-       * TYPE field, together with some more general codes which
-       * can match more than one type of RR.
-       */
+         * A two octet code which specifies the type of the query.
+         * The values for this field include all codes valid for a
+         * TYPE field, together with some more general codes which
+         * can match more than one type of RR.
+         */
       q.QTYPE = typemap.QTYPE[parseInt(pkg.match(/^.{16}/), 2)];
       pkg = pkg.replace(/^.{16}/, '');
       /**
-       * A two octet code that specifies the class of the query.
-       * For example, the QCLASS field is IN for the Internet.
-       */
+         * A two octet code that specifies the class of the query.
+         * For example, the QCLASS field is IN for the Internet.
+         */
       q.QCLASS = typemap.QCLASS[parseInt(pkg.match(/^.{16}/), 2)];
       pkg = pkg.replace(/^.{16}/, '');
 
@@ -218,11 +220,12 @@ function parse(dns) {
   }());
   (function answers() {
     if (!HEADER.ANCOUNT) return;
+    ANSWERS = [];
     for (let i = 0; i < HEADER.ANCOUNT; i++) {
       const a = {};
       /**
-       * A domain name to which this resource record pertains.
-       */
+         * A domain name to which this resource record pertains.
+         */
       a.NAME = '';
       while (true) { // eslint-disable-line no-constant-condition
         if (pkg.length === 0) {
@@ -235,8 +238,8 @@ function parse(dns) {
         }
 
         /**
-         * Message compression
-         */
+           * Message compression
+           */
         if (parseInt(pkg.match(/^.{2}/), 2) === 0b11) {
           pkg = pkg.replace(/^.{2}/, '');
           const pnt = parseInt(pkg.match(/^.{14}/), 2);
@@ -256,38 +259,38 @@ function parse(dns) {
         a.NAME += '.';
       }
       /**
-       * Two octets containing one of the RR type codes.  This
-       * field specifies the meaning of the data in the RDATA
-       * field.
-       */
+         * Two octets containing one of the RR type codes.  This
+         * field specifies the meaning of the data in the RDATA
+         * field.
+         */
       a.TYPE = typemap.QTYPE[parseInt(pkg.match(/^.{16}/), 2)];
       pkg = pkg.replace(/^.{16}/, '');
       /**
-       * Two octets which specify the class of the data in the
-       * RDATA field.
-       */
+         * Two octets which specify the class of the data in the
+         * RDATA field.
+         */
       a.CLASS = typemap.QCLASS[parseInt(pkg.match(/^.{16}/), 2)];
       pkg = pkg.replace(/^.{16}/, '');
       /**
-       * A 32 bit unsigned integer that specifies the time
-       * interval (in seconds) that the resource record may be
-       * cached before it should be discarded.  Zero values are
-       * interpreted to mean that the RR can only be used for the
-       * transaction in progress, and should not be cached.
-       */
+         * A 32 bit unsigned integer that specifies the time
+         * interval (in seconds) that the resource record may be
+         * cached before it should be discarded.  Zero values are
+         * interpreted to mean that the RR can only be used for the
+         * transaction in progress, and should not be cached.
+         */
       a.TTL = parseInt(pkg.match(/^.{32}/), 2);
       pkg = pkg.replace(/^.{32}/, '');
       /**
-       * An unsigned 16 bit integer that specifies the length in
-       * octets of the RDATA field.
-       */
+         * An unsigned 16 bit integer that specifies the length in
+         * octets of the RDATA field.
+         */
       a.RDLENGTH = parseInt(pkg.match(/^.{16}/), 2);
       pkg = pkg.replace(/^.{16}/, '');
       /**
-       * A variable length string of octets that describes the
-       * resource.  The format of this information varies
-       * according to the TYPE and CLASS of the resource record.
-       */
+         * A variable length string of octets that describes the
+         * resource.  The format of this information varies
+         * according to the TYPE and CLASS of the resource record.
+         */
       const RDATArx = new RegExp(`^.{${a.RDLENGTH * 8}}`);
       const _RDATA = pkg.match(RDATArx)[0]; // eslint-disable-line prefer-destructuring
       pkg = pkg.replace(RDATArx, '');

@@ -1,8 +1,10 @@
 /**
+ * Converts binary to UTF8.
  * @param {string} bin
  */
 function toString(bin) {
-  return Buffer.from(parseInt(bin, 2).toString(16), 'hex').toString();
+  if (bin.length % 8 !== 0) throw new Error('Not multiple of 8 bits!');
+  return bin.replace(/(.{8})/g, (full, $1) => String.fromCharCode(parseInt($1, 2)));
 }
 
 /**

@@ -32,7 +32,7 @@ function parseCompression(fullRequest, pnt) {
     }
 
     while (e > 0) {
-      out += bin.toString(tmp.match(/^.{8}/));
+      out += bin.toString(tmp.match(/^.{8}/)[0]);
       tmp = tmp.replace(/^.{8}/, '');
       e--;
     }

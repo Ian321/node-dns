@@ -1,4 +1,4 @@
-/* eslint-disable no-case-declarations */
+/* eslint-disable no-case-declarations, object-curly-newline */
 
 const { bin } = require('../conversion');
 const compression = require('./compression');
@@ -54,11 +54,37 @@ function RR(type, RDATA, FULL) {
     case 'CNAME':
       return { CNAME: parseCompression() };
     case 'SOA':
+      const MNAME = parseCompression();
+      const RNAME = parseCompression();
+      const SERIAL = parseInt(pkg.match(/^.{32}/), 2);
+      pkg = pkg.replace(/^.{32}/, '');
+      const REFRESH = bin.toSignedInt(pkg.match(/^.{32}/)[0], 32);
+      pkg = pkg.replace(/^.{32}/, '');
+      const RETRY = bin.toSignedInt(pkg.match(/^.{32}/)[0], 32);
+      pkg = pkg.replace(/^.{32}/, '');
+      const EXPIRE = bin.toSignedInt(pkg.match(/^.{32}/)[0], 32);
+      pkg = pkg.replace(/^.{32}/, '');
+      const MINIMUM = parseInt(pkg.match(/^.{32}/), 2);
+      pkg = pkg.replace(/^.{32}/, '');
+      return { MNAME, RNAME, SERIAL, REFRESH, RETRY, EXPIRE, MINIMUM };
     case 'WKS':
       return RDATA;
     case 'PTR':
       return { PTRDNAME: parseCompression() };
     case 'HINFO':
+      const cpuLength = parseInt(pkg.match(/^.{8}/), 2);
+      pkg = pkg.replace(/^.{8}/, '');
+      const CPUrx = new RegExp(`^.{${cpuLength * 8}}`);
+      const CPU = bin.toString(pkg.match(CPUrx)[0]);
+      pkg = pkg.replace(CPUrx, '');
+
+      const osLength = parseInt(pkg.match(/^.{8}/), 2);
+      pkg = pkg.replace(/^.{8}/, '');
+      const OSrx = new RegExp(`^.{${osLength * 8}}`);
+      const OS = bin.toString(pkg.match(OSrx)[0]);
+      pkg = pkg.replace(OSrx, '');
+
+      return { cpuLength, CPU, osLength, OS };
     case 'MINFO':
       return RDATA;
     case 'MX':

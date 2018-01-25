@@ -295,7 +295,7 @@ function parse(dns) {
       const RDATArx = new RegExp(`^.{${a.RDLENGTH * 8}}`);
       const _RDATA = pkg.match(RDATArx)[0]; // eslint-disable-line prefer-destructuring
       pkg = pkg.replace(RDATArx, '');
-      a.RDATA = RR[RR[a.TYPE] ? a.TYPE : 'undefined'](_RDATA, dns);
+      a.RDATA = RR(a.TYPE, _RDATA, dns);
       ANSWERS.push(a);
     }
   }());

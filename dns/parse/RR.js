@@ -50,12 +50,14 @@ function RR(type, RDATA, FULL) {
     case 'A':
       return { ADDRESS: bin.toIPv4(RDATA) };
     case 'NS':
-      return RDATA;
+      return { NSDNAME: parseCompression() };
     case 'CNAME':
       return { CNAME: parseCompression() };
     case 'SOA':
     case 'WKS':
+      return RDATA;
     case 'PTR':
+      return { PTRDNAME: parseCompression() };
     case 'HINFO':
     case 'MINFO':
       return RDATA;
@@ -67,8 +69,8 @@ function RR(type, RDATA, FULL) {
     case 'TXT':
       const LENGTH = parseInt(pkg.match(/^.{8}/), 2);
       pkg = pkg.replace(/^.{8}/, '');
-      const DATA = bin.toString(pkg);
-      return { LENGTH, DATA };
+      const TXT = bin.toString(pkg);
+      return { LENGTH, TXT };
     case 'RP':
     case 'AFSDB':
     case 'SIG':

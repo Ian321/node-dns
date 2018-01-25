@@ -1,5 +1,5 @@
 const parse = require('./dns/parse');
 const conversion = require('./dns/conversion');
-const typemap = require('./dns/typemap');
+const typeMap = require('./dns/typeMap');
 
-module.exports = { parse, conversion, typemap };
+module.exports = { parse, conversion, typeMap };

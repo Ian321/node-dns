@@ -1,6 +1,6 @@
 const { bin, hex } = require('./conversion');
 
-const typemap = require('./typemap');
+const typeMap = require('./typeMap');
 const compression = require('./parse/compression');
 const RR = require('./parse/RR');
 
@@ -207,13 +207,13 @@ function parse(dns) {
        * TYPE field, together with some more general codes which
        * can match more than one type of RR.
        */
-      q.QTYPE = typemap.QTYPE[parseInt(pkg.match(/^.{16}/), 2)];
+      q.QTYPE = typeMap.QTYPE[parseInt(pkg.match(/^.{16}/), 2)];
       pkg = pkg.replace(/^.{16}/, '');
       /**
        * A two octet code that specifies the class of the query.
        * For example, the QCLASS field is IN for the Internet.
        */
-      q.QCLASS = typemap.QCLASS[parseInt(pkg.match(/^.{16}/), 2)];
+      q.QCLASS = typeMap.QCLASS[parseInt(pkg.match(/^.{16}/), 2)];
       pkg = pkg.replace(/^.{16}/, '');
 
       QUESTIONS.push(q);
@@ -264,13 +264,13 @@ function parse(dns) {
        * field specifies the meaning of the data in the RDATA
        * field.
        */
-      a.TYPE = typemap.QTYPE[parseInt(pkg.match(/^.{16}/), 2)];
+      a.TYPE = typeMap.QTYPE[parseInt(pkg.match(/^.{16}/), 2)];
       pkg = pkg.replace(/^.{16}/, '');
       /**
        * Two octets which specify the class of the data in the
        * RDATA field.
        */
-      a.CLASS = typemap.QCLASS[parseInt(pkg.match(/^.{16}/), 2)];
+      a.CLASS = typeMap.QCLASS[parseInt(pkg.match(/^.{16}/), 2)];
       pkg = pkg.replace(/^.{16}/, '');
       /**
        * A 32 bit unsigned integer that specifies the time

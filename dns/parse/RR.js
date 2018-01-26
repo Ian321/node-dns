@@ -6,7 +6,7 @@ const compression = require('./compression');
 /**
  * @param {string} type Data type (A, NS, CNAME, ...)
  * @param {string} RDATA The RDATA
- * @param {Buffer} FULL The entire message for decompression
+ * @param {Buffer|string} FULL The entire message for decompression
  */
 function RR(type, RDATA, FULL) {
   let pkg = RDATA;

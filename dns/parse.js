@@ -6,10 +6,10 @@ const RR = require('./parse/RR');
 
 /**
  * Parses a DNS package
- * @param {Buffer} dns
+ * @param {Buffer|string} dns
  */
 function parse(dns) {
-  let pkg = hex.toBin(dns.toString('hex'), 16);
+  let pkg = typeof dns === 'string' ? dns : hex.toBin(dns.toString('hex'), 16);
   const HEADER = {};
   let QUESTIONS;
   let ANSWERS;

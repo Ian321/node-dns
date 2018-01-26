@@ -1,13 +1,13 @@
 const { hex, bin } = require('../conversion');
 
 /**
- * @param {Buffer} fullRequest
+ * @param {Buffer|string} fullRequest
  * @param {number} pnt Pointer
  */
 function parseCompression(fullRequest, pnt) {
   if (!pnt) throw new Error('Missing pointer');
 
-  let tmp = hex.toBin(fullRequest.toString('hex'), 16).match(new RegExp(`.{${pnt * 8}}(.*)00000000`))[1];
+  let tmp = (typeof fullRequest === 'string' ? fullRequest : hex.toBin(fullRequest.toString('hex'), 16)).match(new RegExp(`.{${pnt * 8}}(.*)00000000`))[1];
 
   let out = '';
   while (true) { // eslint-disable-line no-constant-condition

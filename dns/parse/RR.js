@@ -67,8 +67,6 @@ function RR(type, RDATA, FULL) {
       const MINIMUM = parseInt(pkg.match(/^.{32}/), 2);
       pkg = pkg.replace(/^.{32}/, '');
       return { MNAME, RNAME, SERIAL, REFRESH, RETRY, EXPIRE, MINIMUM };
-    case 'WKS':
-      return RDATA;
     case 'PTR':
       return { PTRDNAME: parseCompression() };
     case 'HINFO':
@@ -85,8 +83,6 @@ function RR(type, RDATA, FULL) {
       pkg = pkg.replace(OSrx, '');
 
       return { cpuLength, CPU, osLength, OS };
-    case 'MINFO':
-      return RDATA;
     case 'MX':
       const PREFERENCE = parseInt(pkg.match(/^.{16}/), 2);
       pkg = pkg.replace(/^.{16}/, '');
@@ -97,20 +93,30 @@ function RR(type, RDATA, FULL) {
       pkg = pkg.replace(/^.{8}/, '');
       const TXT = bin.toString(pkg);
       return { LENGTH, TXT };
-    case 'RP':
-    case 'AFSDB':
-    case 'SIG':
-    case 'KEY':
-      return RDATA;
     case 'AAAA':
       return { ADDRESS: bin.toIPv6(RDATA) };
     case 'LOC':
+      const VERSION = parseInt(pkg.match(/^.{8}/), 2);
+      pkg = pkg.replace(/^.{8}/, '');
+      if (VERSION !== 0) throw new Error('Invalid version for LOC');
+      const SIZE = parseInt(pkg.match(/^.{8}/), 2);
+      pkg = pkg.replace(/^.{8}/, '');
+      const HORIZ_PRE = parseInt(pkg.match(/^.{8}/), 2);
+      pkg = pkg.replace(/^.{8}/, '');
+      const VERT_PRE = parseInt(pkg.match(/^.{8}/), 2);
+      pkg = pkg.replace(/^.{8}/, '');
+      const LATITUDE = bin.toSignedInt(pkg.match(/^.{32}/)[0], 32);
+      pkg = pkg.replace(/^.{32}/, '');
+      const LONGITUDE = bin.toSignedInt(pkg.match(/^.{32}/)[0], 32);
+      pkg = pkg.replace(/^.{32}/, '');
+      const ALTITUDE = bin.toSignedInt(pkg.match(/^.{32}/)[0], 32);
+      pkg = pkg.replace(/^.{32}/, '');
+      return { VERSION, SIZE, HORIZ_PRE, VERT_PRE, LATITUDE, LONGITUDE, ALTITUDE };
     case 'SRV':
     case 'NAPTR':
     case 'KX':
     case 'CERT':
     case 'DNAME':
-    case 'APL':
     case 'DS':
     case 'SSHFP':
     case 'IPSECKEY':
@@ -134,6 +140,15 @@ function RR(type, RDATA, FULL) {
     case 'OPT':
     case 'IXFR':
     case 'AXFR':
+    case 'AFSDB':
+      return RDATA;
+    // Obsolete
+    case 'SIG':
+    case 'KEY':
+    case 'RP':
+    case 'APL':
+    case 'MINFO':
+    case 'WKS':
       return RDATA;
     // Non-Parsable
     case '*':

@@ -19,6 +19,7 @@ function RR(type, RDATA, FULL) {
       }
       let e = parseInt(pkg.match(/^.{8}/), 2);
       if (e === 0) {
+        pkg = pkg.replace(/^.{8}/, '');
         break;
       }
 
@@ -137,7 +138,6 @@ function RR(type, RDATA, FULL) {
     case 'CAA':
     case 'TA':
     case 'DLV':
-    case 'OPT':
     case 'IXFR':
     case 'AXFR':
     case 'AFSDB':
@@ -151,6 +151,7 @@ function RR(type, RDATA, FULL) {
     case 'WKS':
       return RDATA;
     // Non-Parsable
+    case 'OPT':
     case '*':
     case 'undefined':
     default:

@@ -16,6 +16,8 @@
     "DHCID",
     "DNAME",
     "DNSKEY",
+    "DNSSEC",
+    "EDNS",
     "EIGRP",
     "EMCON",
     "ENCAP",

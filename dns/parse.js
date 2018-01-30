@@ -13,6 +13,111 @@ function parse(dns) {
   const HEADER = {};
   let QUESTIONS;
   let ANSWERS;
+  let AUTHORITY;
+  let ADDITIONAL;
+
+  function preRR() {
+    const a = {};
+    /**
+     * A domain name to which this resource record pertains.
+     */
+    a.NAME = '';
+    while (true) { // eslint-disable-line no-constant-condition
+      if (pkg.length === 0) {
+        console.error(a);
+        throw new Error('Parsing error');
+      }
+      let e = parseInt(pkg.match(/^.{8}/), 2);
+      if (e === 0) {
+        pkg = pkg.replace(/^.{8}/, '');
+        break;
+      }
+
+      /**
+       * Message decompression
+       */
+      if (parseInt(pkg.match(/^.{2}/), 2) === 0b11) {
+        pkg = pkg.replace(/^.{2}/, '');
+        const pnt = parseInt(pkg.match(/^.{14}/), 2);
+        pkg = pkg.replace(/^.{14}/, '');
+
+        a.NAME += compression(dns, pnt);
+        break;
+      } else {
+        pkg = pkg.replace(/^.{8}/, '');
+      }
+
+      while (e > 0) {
+        a.NAME += bin.toString(pkg.match(/^.{8}/)[0]);
+        pkg = pkg.replace(/^.{8}/, '');
+        e--;
+      }
+      a.NAME += '.';
+    }
+    if (a.NAME === '') a.NAME = '.';
+    /**
+     * Two octets containing one of the RR type codes.  This
+     * field specifies the meaning of the data in the RDATA
+     * field.
+     */
+    a.TYPE = typeMap.QTYPE[parseInt(pkg.match(/^.{16}/), 2)];
+    pkg = pkg.replace(/^.{16}/, '');
+
+    if (a.TYPE === 'OPT') {
+      a.SIZE = parseInt(pkg.match(/^.{16}/), 2);
+      pkg = pkg.replace(/^.{16}/, '');
+
+      // I have no idea what this does
+      a['Higher bits in extended RCODE'] = parseInt(pkg.match(/^.{8}/), 2);
+      pkg = pkg.replace(/^.{8}/, '');
+
+      a.EDNS0 = parseInt(pkg.match(/^.{8}/), 2);
+      pkg = pkg.replace(/^.{8}/, '');
+
+      a.Z = {};
+      /**
+       * Accepts DNSSEC security RRs
+       */
+      a.Z.DO = parseInt(pkg.match(/^.{1}/), 2);
+      pkg = pkg.replace(/^.{1}/, '');
+
+      a.Z['<REST>'] = parseInt(pkg.match(/^.{15}/), 2);
+      pkg = pkg.replace(/^.{15}/, '');
+    } else {
+      /**
+       * Two octets which specify the class of the data in the
+       * RDATA field.
+       */
+      a.CLASS = typeMap.QCLASS[parseInt(pkg.match(/^.{16}/), 2)];
+      pkg = pkg.replace(/^.{16}/, '');
+      /**
+       * A 32 bit unsigned integer that specifies the time
+       * interval (in seconds) that the resource record may be
+       * cached before it should be discarded.  Zero values are
+       * interpreted to mean that the RR can only be used for the
+       * transaction in progress, and should not be cached.
+       */
+      a.TTL = parseInt(pkg.match(/^.{32}/), 2);
+      pkg = pkg.replace(/^.{32}/, '');
+    }
+    /**
+     * An unsigned 16 bit integer that specifies the length in
+     * octets of the RDATA field.
+     */
+    a.RDLENGTH = parseInt(pkg.match(/^.{16}/), 2);
+    pkg = pkg.replace(/^.{16}/, '');
+    /**
+     * A variable length string of octets that describes the
+     * resource.  The format of this information varies
+     * according to the TYPE and CLASS of the resource record.
+     */
+    const RDATArx = new RegExp(`^.{${a.RDLENGTH * 8}}`);
+    const _RDATA = pkg.match(RDATArx)[0]; // eslint-disable-line prefer-destructuring
+    pkg = pkg.replace(RDATArx, '');
+    a.RDATA = a.RDLENGTH ? RR(a.TYPE, _RDATA, dns) : null;
+    return a;
+  }
+
   (function header() {
     /**
      * A 16 bit identifier assigned by the program that
@@ -201,6 +306,7 @@ function parse(dns) {
         }
         q.QNAME += '.';
       }
+      if (q.QNAME === '') q.QNAME = '.';
       /**
        * A two octet code which specifies the type of the query.
        * The values for this field include all codes valid for a
@@ -223,83 +329,26 @@ function parse(dns) {
     if (!HEADER.ANCOUNT) return;
     ANSWERS = [];
     for (let i = 0; i < HEADER.ANCOUNT; i++) {
-      const a = {};
-      /**
-       * A domain name to which this resource record pertains.
-       */
-      a.NAME = '';
-      while (true) { // eslint-disable-line no-constant-condition
-        if (pkg.length === 0) {
-          console.error(a);
-          throw new Error('Parsing error');
-        }
-        let e = parseInt(pkg.match(/^.{8}/), 2);
-        if (e === 0) {
-          break;
-        }
-
-        /**
-         * Message decompression
-         */
-        if (parseInt(pkg.match(/^.{2}/), 2) === 0b11) {
-          pkg = pkg.replace(/^.{2}/, '');
-          const pnt = parseInt(pkg.match(/^.{14}/), 2);
-          pkg = pkg.replace(/^.{14}/, '');
-
-          a.NAME += compression(dns, pnt);
-          break;
-        } else {
-          pkg = pkg.replace(/^.{8}/, '');
-        }
-
-        while (e > 0) {
-          a.NAME += bin.toString(pkg.match(/^.{8}/)[0]);
-          pkg = pkg.replace(/^.{8}/, '');
-          e--;
-        }
-        a.NAME += '.';
-      }
-      /**
-       * Two octets containing one of the RR type codes.  This
-       * field specifies the meaning of the data in the RDATA
-       * field.
-       */
-      a.TYPE = typeMap.QTYPE[parseInt(pkg.match(/^.{16}/), 2)];
-      pkg = pkg.replace(/^.{16}/, '');
-      /**
-       * Two octets which specify the class of the data in the
-       * RDATA field.
-       */
-      a.CLASS = typeMap.QCLASS[parseInt(pkg.match(/^.{16}/), 2)];
-      pkg = pkg.replace(/^.{16}/, '');
-      /**
-       * A 32 bit unsigned integer that specifies the time
-       * interval (in seconds) that the resource record may be
-       * cached before it should be discarded.  Zero values are
-       * interpreted to mean that the RR can only be used for the
-       * transaction in progress, and should not be cached.
-       */
-      a.TTL = parseInt(pkg.match(/^.{32}/), 2);
-      pkg = pkg.replace(/^.{32}/, '');
-      /**
-       * An unsigned 16 bit integer that specifies the length in
-       * octets of the RDATA field.
-       */
-      a.RDLENGTH = parseInt(pkg.match(/^.{16}/), 2);
-      pkg = pkg.replace(/^.{16}/, '');
-      /**
-       * A variable length string of octets that describes the
-       * resource.  The format of this information varies
-       * according to the TYPE and CLASS of the resource record.
-       */
-      const RDATArx = new RegExp(`^.{${a.RDLENGTH * 8}}`);
-      const _RDATA = pkg.match(RDATArx)[0]; // eslint-disable-line prefer-destructuring
-      pkg = pkg.replace(RDATArx, '');
-      a.RDATA = RR(a.TYPE, _RDATA, dns);
-      ANSWERS.push(a);
+      ANSWERS.push(preRR());
     }
   }());
-  return { HEADER, QUESTIONS, ANSWERS };
+  (function authority() {
+    if (!HEADER.NSCOUNT) return;
+    AUTHORITY = [];
+    for (let i = 0; i < HEADER.NSCOUNT; i++) {
+      AUTHORITY.push(preRR());
+    }
+  }());
+  (function additional() {
+    if (!HEADER.ARCOUNT) return;
+    ADDITIONAL = [];
+    for (let i = 0; i < HEADER.ARCOUNT; i++) {
+      ADDITIONAL.push(preRR());
+    }
+  }());
+  return {
+    HEADER, QUESTIONS, ANSWERS, AUTHORITY, ADDITIONAL
+  };
 }
 
 module.exports = parse;

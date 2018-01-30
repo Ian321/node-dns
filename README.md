@@ -6,14 +6,14 @@ Can do list:
 - [X] Parse Question
 - [X] Parse Answer
 - [ ] Parse RR
-- [ ] Parse Authority
-- [ ] Parse Additional
+- [X] Parse Authority
+- [X] Parse Additional
 
 Things to test:
 
 - [X] Message decompression
   - [X] Question
-  - [X] Answer
+  - [X] Other
 
 RFCs:
 

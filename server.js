@@ -25,12 +25,12 @@ const server2 = net.createServer(c => {
      * the low-level processing to assemble a complete message before beginning
      * to parse it.
      */
-      l = parseInt(pkg.match(/^.{2}/), 2);
-      pkg = pkg.replace(/^.{2}/, '');
+      l = parseInt(pkg.match(/^.{16}/), 2);
+      pkg = pkg.replace(/^.{16}/, '');
     }
     msg += pkg;
-    if (l === 0 || msg.length === l) {
-      console.log(`server got: '${JSON.stringify(parse(msg).QUESTIONS)}' from TCP:${c.address().address}:${c.address().port}`);
+    if (l === 0 || (msg.length / 8) === l) {
+      console.log(`server got: '${JSON.stringify(parse(msg).QUESTIONS)}' from TCP/${c.address().address}/${c.address().port}`);
       l = -1;
       msg = '';
     }
@@ -51,7 +51,7 @@ server2.on('error', err => {
 });
 
 server.on('message', (msg, rinfo) => {
-  console.log(`server got: '${JSON.stringify(parse(msg).QUESTIONS)}' from UDP:${rinfo.address}:${rinfo.port}`);
+  console.log(`server got: '${JSON.stringify(parse(msg).QUESTIONS)}' from UDP/${rinfo.address}/${rinfo.port}`);
 });
 
 server.on('listening', () => {

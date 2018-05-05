@@ -90,6 +90,7 @@
     "akadns",
     "arpa",
     "onprembn",
-    "typemap"
+    "typemap",
+    "udpwireformat"
   ]
 }

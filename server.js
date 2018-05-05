@@ -1,6 +1,8 @@
 const dgram = require('dgram');
 const net = require('net');
-const { parse, conversion: { hex } } = require('./index');
+const { parse, conversion: { hex, bin }, via: { udpwireformat } } = require('./index');
+
+const port = process.argv[2] || 53;
 
 const server = dgram.createSocket('udp4');
 const server2 = net.createServer(c => {
@@ -30,7 +32,15 @@ const server2 = net.createServer(c => {
     }
     msg += pkg;
     if (l === 0 || (msg.length / 8) === l) {
-      console.log(`server got: '${JSON.stringify(parse(msg).QUESTIONS)}' from TCP/${c.address().address}/${c.address().port}`);
+      const pkg2 = Buffer.from(bin.toHex(msg), 'hex');
+      console.log(`server got: '${JSON.stringify(parse(pkg2).QUESTIONS)}' from TCP/${c.address().address}/${c.address().port}`);
+      udpwireformat(pkg2, 'https://1.1.1.1/dns-query').then(res => {
+        // Have to add back those 2 bytes.
+        const sendL = Buffer.from(bin.toHex(res.length.toString(2).padStart(16, '0')), 'hex');
+        c.end(Buffer.concat([sendL, res]));
+      }).catch(err => {
+        console.error(err);
+      });
       l = -1;
       msg = '';
     }
@@ -52,6 +62,11 @@ server2.on('error', err => {
 
 server.on('message', (msg, rinfo) => {
   console.log(`server got: '${JSON.stringify(parse(msg).QUESTIONS)}' from UDP/${rinfo.address}/${rinfo.port}`);
+  udpwireformat(msg, 'https://1.1.1.1/dns-query').then(res => {
+    server.send(res, rinfo.port, rinfo.address);
+  }).catch(err => {
+    console.error(err);
+  });
 });
 
 server.on('listening', () => {
@@ -59,5 +74,5 @@ server.on('listening', () => {
   console.log(`server listening ${address.address}:${address.port}`);
 });
 
-server.bind(53);
-server2.listen(53);
+server.bind(port);
+server2.listen(port);
